@@ -6,7 +6,7 @@
 //The password to access your WiFi network
 #define WIFIPASSWORD "NOT_DISPLAYED"
 //The homeserver hostname: e.g.: matrix.org
-#define HOMESERVER_DOMAIN  "NOT_DISPLAYED.kusys.de"
+#define HOMESERVER_DOMAIN  "NOT_DISPLAYED"
 //The URL scheme used: http or https
 #define HOMESERVER_URL_SCHEME  "NOT_DISPLAYED"
 //The port of your homeserver
