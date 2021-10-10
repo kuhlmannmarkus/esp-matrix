@@ -15,6 +15,8 @@ Matrix *client;
 WiFiClientSecure wifiClient;
 HTTPClient httpClient;
 
+time_t now;
+
 const char PMEMCACERT[] PROGMEM = CACERT;
 X509List cacert(PMEMCACERT);
 
@@ -46,15 +48,18 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   //OPEN CONNECTION TO HOMESERVER
-  configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
-  time_t now = time(nullptr);
-  while (now < 8 * 3600 * 2) {
-    delay(500);
+  //TODO CAN BE MOVED TO MATRIX OBJECT
+  if(strcmp(HOMESERVER_URL_SCHEME, "https") == 0){
+    configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
     now = time(nullptr);
+    while (now < 8 * 3600 * 2) {
+      delay(500);
+      now = time(nullptr);
+    }
+    struct tm timeinfo;
+    gmtime_r(&now, &timeinfo);
+    wifiClient.setTrustAnchors(&cacert);
   }
-  struct tm timeinfo;
-  gmtime_r(&now, &timeinfo);
-  wifiClient.setTrustAnchors(&cacert);
   if (!wifiClient.connect(HOMESERVER_DOMAIN, HOMESERVER_PORT)) {
     Serial.println("ERROR: Homeserver connection failed.");
     return;
