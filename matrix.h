@@ -2,8 +2,15 @@
 #define MATRIX_H
 
 #define LOGIN_URL "/_matrix/client/r0/login"
-#define SEND_URL0 "/_matrix/client/r0/rooms/"
-#define SEND_URL1 "/send/m.room.message/"
+#define SCHEME_SEPARATOR "://"
+#define SEND_URL_P0 "/_matrix/client/r0/rooms/"
+#define SEND_URL_P1 "/send/m.room.message/"
+
+#define STATUSCODE_HTTP_OK 0 //Im planning on returning ints instead of bools
+#define STATUSCODE_HTTP_FAILED 1
+
+#define STATUSCODE_CLIENT_OK 0
+#define STATUSCODE_CLIENT_CONNECTION_FAILED 1
 
 #if defined(ESP8266) || defined(ESP32)
 #include <functional>
@@ -27,6 +34,7 @@ class Matrix {
     void setScheme(const char*);
     const char* getDomain();
     const char* getScheme();
+    bool connect();
     bool login(const char*, const char*);
     void setAccessToken(const char*);
     const char* getAccessToken();
@@ -43,6 +51,8 @@ class Matrix {
     const char* m_domain;
     const char* m_scheme;
     const char* m_accesstoken;
+    const char* m_lastMessageToken;
+    bool m_ready;
     MATRIX_CALLBACK_SIGNATURE;
 };
 
