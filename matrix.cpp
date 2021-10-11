@@ -4,16 +4,28 @@ Matrix::Matrix() {
   this->m_wifi_client = NULL;
   this->m_http_client = NULL;
   this->m_accesstoken = NULL;
+  setCallback(NULL);
 }
 
 Matrix::Matrix(WiFiClientSecure& _wificlient, HTTPClient& _httpclient) {
   this->m_http_client = &_httpclient;
   this->m_wifi_client = &_wificlient;
   this->m_accesstoken = NULL;
+  setCallback(NULL);
 }
 
 Matrix::~Matrix() {
   
+}
+
+Matrix& Matrix::setCallback(MATRIX_CALLBACK_SIGNATURE) {
+    this->callback = callback;
+    return *this;
+}
+
+void Matrix::test() {
+  callback("HUHU", "LALA");
+  return;
 }
 
 void Matrix::setDomain(const char* _domain) {
@@ -42,7 +54,7 @@ bool Matrix::login(const char* _username, const char* _password){
   root["user"] = _username;
   root["password"] = _password;
   serializeJson(root, msg);
-  String url = String(m_scheme) + String("://") + String(m_domain) + String("/_matrix/client/r0/login"); //CAN WE USE SOMETHING ELSE THAN STRINGS
+  String url = String(m_scheme) + String("://") + String(m_domain) + String(LOGIN_URL); //CAN WE USE SOMETHING ELSE THAN STRINGS
   m_http_client->begin(*m_wifi_client, url);
   m_http_client->addHeader("Content-Type", "application/json");
   int rc = m_http_client->POST(msg);
@@ -72,7 +84,32 @@ bool Matrix::retrieve(){
   return res;
 }
 
-bool Matrix::send(const char* _msg){
+bool Matrix::sendPlaintext(const char* _msg, const char* _roomid){
+  String msgcontent;
+  DynamicJsonDocument root(1024);
+  root["msgtype"] = "m.text";
+  root["body"] = _msg;
+  serializeJson(root, msgcontent);
+  bool res = this->sendJSON(msgcontent.c_str(), _roomid);
+  return res;
+}
+
+bool Matrix::sendMessage(Message _msg, const char* _roomid){
   bool res = false;
+  return res;
+}
+
+bool Matrix::sendJSON(const char* _JSON, const char* _roomid){
+  bool res = false;
+  String url = String(m_scheme) + String("://") + String(m_domain) + String(SEND_URL0) + String(_roomid) + String(SEND_URL1) + String(millis()) + String("?access_token=") + String(m_accesstoken);
+  m_http_client->begin(*m_wifi_client, url);
+  m_http_client->addHeader("Content-Type", "application/json");
+  int rc = m_http_client->PUT(_JSON);
+  if (rc > 0) {
+    if (rc == HTTP_CODE_OK) {
+      res = true;
+    }
+  } 
+  m_http_client->end();
   return res;
 }

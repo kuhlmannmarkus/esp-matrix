@@ -4,6 +4,7 @@
 class Message {
   public:
     Message();
+    Message(const char*);
     ~Message();
     void setPlainMessage(const char*);
     const char* getPlainMessage();

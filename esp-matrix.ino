@@ -6,7 +6,6 @@
 
 #include "secrets.h"
 #include "matrix.h"
-#include "Arduino.h"
 #include <ArduinoJson.h>
 #include <WiFiClientSecure.h>
 #include <ESP8266HTTPClient.h>
@@ -31,10 +30,10 @@ void setup() {
   Serial.print("INFO: Local MAC address: ");
   Serial.println(WiFi.macAddress());
   Serial.print("INFO: Connecting to WiFi ");
-  int connection_wait_periods = 0;
+  unsigned int connection_wait_periods = 0;
   while (WiFi.status() != WL_CONNECTED) {
     if(connection_wait_periods * WIFICONNECTIONWAITPERIOD > MAXWIFICONNECTIONWAIT){
-      Serial.println("ERROR: WiFi connection failed");
+      Serial.println("ERROR: WiFi connection failed.");
       return;
     }
     Serial.print(".");
@@ -48,7 +47,7 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   //OPEN CONNECTION TO HOMESERVER
-  //TODO CAN BE MOVED TO MATRIX OBJECT
+  //TODO COULD BE MOVED TO MATRIX OBJECT
   if(strcmp(HOMESERVER_URL_SCHEME, "https") == 0){
     configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
     now = time(nullptr);
@@ -67,6 +66,7 @@ void setup() {
   else{
     Serial.println("INFO: Successfully connected to homeserver.");
   }
+  
   //MATRIX CLIENT SETUP
   client = new Matrix(wifiClient, httpClient);
   client->setDomain(HOMESERVER_DOMAIN);
@@ -74,7 +74,7 @@ void setup() {
   //LOGIN METHOD 1: RETRIEVE ACCESS TOKEN
   bool loginsuccess = client->login(USERNAME, PASSWORD);
   if(!loginsuccess){
-    Serial.println("ERROR: Homeserver login failed");
+    Serial.println("ERROR: Homeserver login failed.");
     return;
   }
   else{
@@ -82,6 +82,23 @@ void setup() {
   }
   //LOGIN METHOD 2: DIRECTLY SET ACCESS TOKEN
   //client->setAccessToken(SOME_ACCESS_TOKEN);
+  client->setCallback(callback);
+  delay(500);
+  client->test();
+  bool sendsuccess = client->sendPlaintext("Hello Test", ROOMID);
+  if(!sendsuccess){
+    Serial.println("ERROR: Sending message failed.");
+    return;
+  }
+  else{
+    Serial.println("INFO: Successfully sent message to room.");
+  }
+}
+
+void callback(char* _body, char* _roomid){
+  Serial.print("Received from CB: ");
+  Serial.println(_body);
+  return;
 }
 
 void loop() {
