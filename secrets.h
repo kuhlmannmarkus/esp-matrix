@@ -21,7 +21,6 @@
 #define ROOMID "NOT_DISPLAYED"
 /*
 The CA certificate your homeserver transmits. The recent letsencrypt certificate would look like this:
-
 "-----BEGIN CERTIFICATE-----\r\n" \
 "MIIFFjCCAv6gAwIBAgIRAJErCErPDBinU/bWLiWnX1owDQYJKoZIhvcNAQELBQAw\r\n" \
 "TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh\r\n" \
@@ -52,8 +51,11 @@ The CA certificate your homeserver transmits. The recent letsencrypt certificate
 "MldlTTKB3zhThV1+XWYp6rjd5JW1zbVWEkLNxE7GJThEUG3szgBVGP7pSWTUTsqX\r\n" \
 "nLRbwHOoq7hHwg==\r\n" \
 "-----END CERTIFICATE-----"
-
 */
-#define CACERT 	"NOT_DISPLAYED"
+#define CACERT   "NOT_DISPLAYED"
+//THE CLIENT PRIVATE KEY USED FOR mTLS - Please look at CACERT for format info
+#define CLIENTKEY   "NOT_DISPLAYED"
+//THE CLIENT CERTIFICATE USED FOR mTLS - Please look at CACERT for format info
+#define CLIENTCERT   "NOT_DISPLAYED"
 
 #endif // SECRETS_H

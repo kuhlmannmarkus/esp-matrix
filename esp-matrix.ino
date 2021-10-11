@@ -19,6 +19,12 @@ time_t now;
 const char PMEMCACERT[] PROGMEM = CACERT;
 X509List cacert(PMEMCACERT);
 
+const char PMEMCLIENTCERT[] PROGMEM = CLIENTCERT;
+X509List clientcert(PMEMCLIENTCERT);
+
+const char PMEMCLIENTKEY[] PROGMEM = CLIENTKEY;
+PrivateKey clientkey(PMEMCLIENTKEY);
+
 void setup() {
   //SERIAL LINK SETUP
   Serial.begin(BAUDRATE);
@@ -58,6 +64,7 @@ void setup() {
     struct tm timeinfo;
     gmtime_r(&now, &timeinfo);
     wifiClient.setTrustAnchors(&cacert);
+    wifiClient.setClientRSACert(&clientcert, &clientkey);
   }
   if (!wifiClient.connect(HOMESERVER_DOMAIN, HOMESERVER_PORT)) {
     Serial.println("ERROR: Homeserver connection failed.");
