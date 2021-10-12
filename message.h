@@ -10,6 +10,7 @@ class Message {
     const char* getPlainMessage();
   private:
     const char* m_plainMessage;
+    const char* m_sender;
 };
 
 #endif // MESSAGE_H

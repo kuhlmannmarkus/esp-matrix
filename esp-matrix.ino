@@ -9,6 +9,11 @@
 #include <ArduinoJson.h>
 #include <WiFiClientSecure.h>
 #include <ESP8266HTTPClient.h>
+#include "DHT.h"
+
+#define DHTPIN 15   
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
 
 Matrix *client;
 WiFiClientSecure wifiClient;
@@ -26,6 +31,9 @@ const char PMEMCLIENTKEY[] PROGMEM = CLIENTKEY;
 PrivateKey clientkey(PMEMCLIENTKEY);
 
 void setup() {
+  //DHT SETUP
+  dht.begin();
+  
   //SERIAL LINK SETUP
   Serial.begin(BAUDRATE);
   Serial.println();
@@ -91,7 +99,6 @@ void setup() {
   //client->setAccessToken(SOME_ACCESS_TOKEN);
   client->setCallback(callback);
   delay(500);
-  client->test();
   bool sendsuccess = client->sendPlaintext("Hello Test", ROOMID);
   if(!sendsuccess){
     Serial.println("ERROR: Sending message failed.");
@@ -104,10 +111,33 @@ void setup() {
 
 void callback(char* _body, char* _roomid){
   Serial.print("Received from CB: ");
-  Serial.println(_body);
+  Serial.print(_body);
+  Serial.print(" in room: ");
+  Serial.println(_roomid);
+  
   return;
 }
 
 void loop() {
+  bool retsuccess = client->retrieve(ROOMID);
+  if(!retsuccess){
+    Serial.println("ERROR: Retrieving message failed.");
+  }
+  else{
+    Serial.println("INFO: Successfully retrieved message from room.");
+  }
+  //Serial.println(getClimate());
+  //client->sendPlaintext(getClimate().c_str(), ROOMID);
+  delay(1000);
+}
 
+String getClimate(){
+  float hum = dht.readHumidity();
+  float temp = dht.readTemperature();
+  StaticJsonDocument<50> doc;
+  String jsondata;
+  doc["temp"] = temp;
+  doc["hum"] = hum;
+  serializeJson(doc, jsondata);
+  return jsondata;
 }

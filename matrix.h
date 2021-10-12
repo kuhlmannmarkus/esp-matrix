@@ -36,13 +36,12 @@ class Matrix {
     const char* getScheme();
     bool connect();
     bool login(const char*, const char*);
-    void setAccessToken(const char*);
-    const char* getAccessToken();
-    bool retrieve();
+    void setAccessToken(String);
+    String getAccessToken();
+    bool retrieve(const char*);
     bool sendPlaintext(const char*, const char*);
     bool sendMessage(Message, const char*);
     Matrix& setCallback(MATRIX_CALLBACK_SIGNATURE);
-    void test();
     
   private:
     bool sendJSON(const char*, const char*);
@@ -50,8 +49,10 @@ class Matrix {
     HTTPClient* m_http_client;
     const char* m_domain;
     const char* m_scheme;
-    const char* m_accesstoken;
-    const char* m_lastMessageToken;
+    String m_accesstoken;
+    String m_lastMessageToken;
+    String m_lastMessageStartToken;
+    String m_latestMessageID;
     bool m_ready;
     MATRIX_CALLBACK_SIGNATURE;
 };

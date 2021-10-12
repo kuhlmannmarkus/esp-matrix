@@ -3,17 +3,17 @@
 Matrix::Matrix() {
   this->m_wifi_client = NULL;
   this->m_http_client = NULL;
-  this->m_accesstoken = NULL;
+  this->m_accesstoken = "";
   setCallback(NULL);
-  this->m_lastMessageToken = NULL;
+  this->m_lastMessageToken = "";
 }
 
 Matrix::Matrix(WiFiClientSecure& _wificlient, HTTPClient& _httpclient) {
   this->m_http_client = &_httpclient;
   this->m_wifi_client = &_wificlient;
-  this->m_accesstoken = NULL;
+  this->m_accesstoken = "";
   setCallback(NULL);
-  this->m_lastMessageToken = NULL;
+  this->m_lastMessageToken = "";
 }
 
 Matrix::~Matrix() {
@@ -23,11 +23,6 @@ Matrix::~Matrix() {
 Matrix& Matrix::setCallback(MATRIX_CALLBACK_SIGNATURE) {
     this->callback = callback;
     return *this;
-}
-
-void Matrix::test() {
-  callback("HUHU", "LALA");
-  return;
 }
 
 void Matrix::setDomain(const char* _domain) {
@@ -71,25 +66,60 @@ bool Matrix::login(const char* _username, const char* _password){
       m_http_client->end();
       DynamicJsonDocument resp(256);
       deserializeJson(resp, body);
-      m_accesstoken = resp["access_token"];
+      m_accesstoken = String(resp["access_token"]);
       res = true;
     }
   }
   return res;
 }
 
-void Matrix::setAccessToken(const char* _accesstoken){
+void Matrix::setAccessToken(String _accesstoken){
   this->m_accesstoken = _accesstoken;
 }
 
-const char* Matrix::getAccessToken(){
+String Matrix::getAccessToken(){
   return this->m_accesstoken;
 }
 
-bool Matrix::retrieve(){
-  bool res = false;
-  //IF m_lastMessageToken is NULL, get latest message, push to callback and set m_lastMessageToken
-  //ELSE get all messages sicne m_lastMessageToken in single http calls until response is "empty" and push every message to callback
+bool Matrix::retrieve(const char* _roomid){
+  bool res = true;
+  String start = "something";
+  String end = "somethingelse";
+  while(start != end){
+    String url = String(m_scheme) + String(SCHEME_SEPARATOR) + String(m_domain) + String(SEND_URL_P0) + String(_roomid) + "/messages?access_token=" + m_accesstoken + "&limit=1";
+    if (m_lastMessageToken == "") {
+      url += "&dir=b";
+    }
+    else {
+      url += "&dir=f&from=" + String(m_lastMessageToken);
+    }
+    m_http_client->begin(*m_wifi_client, url);
+    int rc = m_http_client->GET();
+    if (rc > 0) {
+      if (rc == HTTP_CODE_OK) {
+        String cont = m_http_client->getString();
+        DynamicJsonDocument doc(2048);
+        deserializeJson(doc, cont);
+        start = String(doc["start"]);
+        end = String(doc["end"]);
+        JsonObject chunk_0 = doc["chunk"][0];
+        String ID = chunk_0["event_id"]; 
+        String sender = chunk_0["user_id"];
+        if(end != start && ID != m_latestMessageID){
+          callback((char*)cont.c_str(), (char*)_roomid);
+        }
+        m_latestMessageID = ID;
+        m_lastMessageToken = String(doc["end"]);
+        m_lastMessageStartToken = String(doc["start"]);
+      }
+      else {
+        res = false;
+        m_http_client->end();
+        return res;
+      }
+    }
+    m_http_client->end();
+  }
   return res;
 }
 
@@ -110,7 +140,7 @@ bool Matrix::sendMessage(Message _msg, const char* _roomid){
 
 bool Matrix::sendJSON(const char* _JSON, const char* _roomid){
   bool res = false;
-  String url = String(m_scheme) + String(SCHEME_SEPARATOR) + String(m_domain) + String(SEND_URL_P0) + String(_roomid) + String(SEND_URL_P1) + String(millis()) + String("?access_token=") + String(m_accesstoken);
+  String url = String(m_scheme) + String(SCHEME_SEPARATOR) + String(m_domain) + String(SEND_URL_P0) + String(_roomid) + String(SEND_URL_P1) + String(millis()) + String("?access_token=") + m_accesstoken;
   m_http_client->begin(*m_wifi_client, url);
   m_http_client->addHeader("Content-Type", "application/json");
   int rc = m_http_client->PUT(_JSON);
