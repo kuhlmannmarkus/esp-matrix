@@ -1,27 +1,24 @@
 #ifndef SECRETS_H
 #define SECRETS_H
 
-//The SSID of your WiFi network
+//The SSID of your WiFi network.
 #define SSID "NOT_DISPLAYED"
-//The password to access your WiFi network
+//The password to access your WiFi network.
 #define WIFIPASSWORD "NOT_DISPLAYED"
-//The homeserver hostname: e.g.: matrix.org
+//The homeserver hostname: e.g.: matrix.org.
 #define HOMESERVER_DOMAIN  "NOT_DISPLAYED"
-//The URL scheme used: http or https
-#define HOMESERVER_URL_SCHEME  "NOT_DISPLAYED"
-//The port of your homeserver
+//The port of your homeserver. Typically 443.
 #define HOMESERVER_PORT NOT_DISPLAYED
-//The username of the service account associated with this device
+//The username of the service account associated with this device.
 #define USERNAME "NOT_DISPLAYED"
-//The password to access your service account
+//The password to access your service account.
 #define PASSWORD "NOT_DISPLAYED"
-//An access token to access your service account
-#define SOME_ACCESS_TOKEN "NOT_DISPLAYED"
-//The room Id your device should listen to
+//An access token to access your service account.
+#define ACCESS_TOKEN "NOT_DISPLAYED"
+//The room Id your device should listen to.
 #define ROOMID "NOT_DISPLAYED"
-/*
-The CA certificate your homeserver transmits. The recent letsencrypt certificate would look like this:
-"-----BEGIN CERTIFICATE-----\r\n" \
+//The CA certificate your homeservers certificate should be checked against. This example represents the recent LetsEncrypt CA.
+#define CACERT   "-----BEGIN CERTIFICATE-----\r\n" \
 "MIIFFjCCAv6gAwIBAgIRAJErCErPDBinU/bWLiWnX1owDQYJKoZIhvcNAQELBQAw\r\n" \
 "TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh\r\n" \
 "cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMjAwOTA0MDAwMDAw\r\n" \
@@ -51,11 +48,9 @@ The CA certificate your homeserver transmits. The recent letsencrypt certificate
 "MldlTTKB3zhThV1+XWYp6rjd5JW1zbVWEkLNxE7GJThEUG3szgBVGP7pSWTUTsqX\r\n" \
 "nLRbwHOoq7hHwg==\r\n" \
 "-----END CERTIFICATE-----"
-*/
-#define CACERT   "NOT_DISPLAYED"
-//THE CLIENT PRIVATE KEY USED FOR mTLS - Please look at CACERT for format info
-#define CLIENTKEY   "NOT_DISPLAYED"
-//THE CLIENT CERTIFICATE USED FOR mTLS - Please look at CACERT for format info
-#define CLIENTCERT   "NOT_DISPLAYED"
+//The client key used for mTLS. Set to "" to disable.
+#define CLIENTKEY   ""
+//The client certificate used for mTLS. Set to "" to disable.
+#define CLIENTCERT   ""
 
 #endif // SECRETS_H

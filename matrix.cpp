@@ -4,6 +4,8 @@ Matrix::Matrix() {
   this->m_wifi_client = NULL;
   this->m_http_client = NULL;
   this->m_accesstoken = "";
+  this->m_scheme = "";
+  this->m_domain = "";
   setCallback(NULL);
   this->m_lastMessageToken = "";
 }
@@ -12,6 +14,8 @@ Matrix::Matrix(WiFiClientSecure& _wificlient, HTTPClient& _httpclient) {
   this->m_http_client = &_httpclient;
   this->m_wifi_client = &_wificlient;
   this->m_accesstoken = "";
+  this->m_scheme = "";
+  this->m_domain = "";
   setCallback(NULL);
   this->m_lastMessageToken = "";
 }
@@ -25,27 +29,14 @@ Matrix& Matrix::setCallback(MATRIX_CALLBACK_SIGNATURE) {
     return *this;
 }
 
-void Matrix::setDomain(const char* _domain) {
+void Matrix::setDomain(String _domain) {
   this->m_domain = _domain;
   return;
 }
 
-void Matrix::setScheme(const char* _scheme){
+void Matrix::setScheme(String _scheme){
   this->m_scheme = _scheme;
   return;
-}
-
-const char* Matrix::getDomain() {
-  return this->m_domain;
-}
-
-const char* Matrix::getScheme() {
-  return this->m_scheme;
-}
-
-bool Matrix::connect() {
-  bool res = false;
-  return res;
 }
 
 bool Matrix::login(const char* _username, const char* _password){
@@ -56,8 +47,10 @@ bool Matrix::login(const char* _username, const char* _password){
   root["user"] = _username;
   root["password"] = _password;
   serializeJson(root, msg);
-  String url = String(m_scheme) + String(SCHEME_SEPARATOR) + String(m_domain) + String(LOGIN_URL); //CAN WE USE SOMETHING ELSE THAN STRINGS
+  String url = m_scheme + String("://") + m_domain + String("/_matrix/client/r0/login");
   m_http_client->begin(*m_wifi_client, url);
+  //IN MORE POMPLEX SCENARIOS (LDAP USER LOOKUP ETC.) ALLOW FOR LARGER TIMEOUT VALUES
+  m_http_client->setTimeout(10000);
   m_http_client->addHeader("Content-Type", "application/json");
   int rc = m_http_client->POST(msg);
   if (rc > 0) {
@@ -66,9 +59,17 @@ bool Matrix::login(const char* _username, const char* _password){
       m_http_client->end();
       DynamicJsonDocument resp(256);
       deserializeJson(resp, body);
-      m_accesstoken = String(resp["access_token"]);
+      this->m_accesstoken = String(resp["access_token"]);
       res = true;
     }
+    else{
+      Serial.print("ERROR: HTTP CODE: ");
+      Serial.println(rc);
+    }
+  }
+  else{
+      Serial.print("ERROR: HTTP CLIENT RC: ");
+      Serial.println(rc);
   }
   return res;
 }
@@ -77,16 +78,12 @@ void Matrix::setAccessToken(String _accesstoken){
   this->m_accesstoken = _accesstoken;
 }
 
-String Matrix::getAccessToken(){
-  return this->m_accesstoken;
-}
-
 bool Matrix::retrieve(const char* _roomid){
   bool res = true;
   String start = "something";
   String end = "somethingelse";
   while(start != end){
-    String url = String(m_scheme) + String(SCHEME_SEPARATOR) + String(m_domain) + String(SEND_URL_P0) + String(_roomid) + "/messages?access_token=" + m_accesstoken + "&limit=1";
+    String url = m_scheme + String("://") + m_domain + String("/_matrix/client/r0/rooms/") + String(_roomid) + "/messages?access_token=" + m_accesstoken + "&limit=1";
     if (m_lastMessageToken == "") {
       url += "&dir=b";
     }
@@ -113,10 +110,16 @@ bool Matrix::retrieve(const char* _roomid){
         m_lastMessageStartToken = String(doc["start"]);
       }
       else {
+        Serial.print("ERROR: HTTP CODE: ");
+        Serial.println(rc);
         res = false;
         m_http_client->end();
         return res;
       }
+    }
+    else{
+      Serial.print("ERROR: HTTP CLIENT RC: ");
+      Serial.println(rc);
     }
     m_http_client->end();
   }
@@ -125,7 +128,7 @@ bool Matrix::retrieve(const char* _roomid){
 
 bool Matrix::sendPlaintext(const char* _msg, const char* _roomid){
   String msgcontent;
-  DynamicJsonDocument root(1024); //THIS IS DIRTY
+  DynamicJsonDocument root(1024); //THIS MIGHT BE DIRTY, DEPENDING ON THE LENGTH OF _msg
   root["msgtype"] = "m.text";
   root["body"] = _msg;
   serializeJson(root, msgcontent);
@@ -133,14 +136,9 @@ bool Matrix::sendPlaintext(const char* _msg, const char* _roomid){
   return res;
 }
 
-bool Matrix::sendMessage(Message _msg, const char* _roomid){
-  bool res = false;
-  return res;
-}
-
 bool Matrix::sendJSON(const char* _JSON, const char* _roomid){
   bool res = false;
-  String url = String(m_scheme) + String(SCHEME_SEPARATOR) + String(m_domain) + String(SEND_URL_P0) + String(_roomid) + String(SEND_URL_P1) + String(millis()) + String("?access_token=") + m_accesstoken;
+  String url = m_scheme + String("://") + m_domain + String("/_matrix/client/r0/rooms/") + String(_roomid) + String("/send/m.room.message/") + String(millis()) + String("?access_token=") + m_accesstoken;
   m_http_client->begin(*m_wifi_client, url);
   m_http_client->addHeader("Content-Type", "application/json");
   int rc = m_http_client->PUT(_JSON);
@@ -148,7 +146,15 @@ bool Matrix::sendJSON(const char* _JSON, const char* _roomid){
     if (rc == HTTP_CODE_OK) {
       res = true;
     }
-  } 
+    else{
+      Serial.print("ERROR: HTTP CODE: ");
+      Serial.println(rc);
+    }
+  }
+  else{
+      Serial.print("ERROR: HTTP CLIENT RC: ");
+      Serial.println(rc);
+  }
   m_http_client->end();
   return res;
 }
